@@ -11,11 +11,14 @@ namespace WikipediaParser
     {
         private string xmlPath = "";
         private Thread thread;
-        private volatile bool isRunning = false;
+        //cancellation token
+        private CancellationTokenSource? cancellationTokenSource;
+        private bool EOF = false;
 
         public WikipediaLoader(string xmlPath)
         {
             this.xmlPath = xmlPath;
+            this.EOF = false;
         }
 
         private async Task LoadXml()
@@ -27,7 +30,7 @@ namespace WikipediaParser
                 while (reader.Read())
                 {
                     //if isRunning is false, stop the thread
-                    if (!isRunning) return;
+                    if (cancellationTokenSource.IsCancellationRequested) return;
 
                     //check if the current node is an element
                     if (reader.NodeType != XmlNodeType.Element)
@@ -54,29 +57,46 @@ namespace WikipediaParser
                         if (page.text.StartsWith("#REDIRECT")) continue;
 
                         //add the page to the buffer
-                        await WikipediaReadBuffer.Enqueue(page);
+                        await WikipediaReadBuffer.Enqueue(page, cancellationTokenSource);
                     }
                 }
             }
+
+            //end of file bool
+            EOF = true;
+
+            //remove the cancellation source
+            cancellationTokenSource = null;
+
+            //write to console end of buffer
+            Console.WriteLine("End of buffer");
         }
 
         public void StartThread()
         {
             //return if thread is already going
-            if (isRunning) return;
+            if (cancellationTokenSource is not null) return;
+            cancellationTokenSource = new CancellationTokenSource();
 
             //start thread
             thread = new Thread(() =>
             {
                 LoadXml();
             });
-            isRunning = true;
             thread.Start();
+        }
+
+        public bool IsEOF()
+        {
+            return EOF;
         }
 
         public void CancelThread()
         {
-            isRunning = false;
+            cancellationTokenSource?.Cancel();
+
+            //wait for thread to join
+            thread.Join();
         }
     }
 }

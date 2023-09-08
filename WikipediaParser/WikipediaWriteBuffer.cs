@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WikipediaParser
 {
-    static class WikipediaReadBuffer
+    public static class WikipediaWriteBuffer
     {
         //queue of WikipediaPage
         private static Queue<WikipediaPage> buffer = new Queue<WikipediaPage>();
@@ -15,14 +16,15 @@ namespace WikipediaParser
         //max buffer size 1GB
         private const uint MAX_BUFFER_SIZE = 1 * 1024 * 1024 * 1024;
         private static uint currentBufferSize = 0;
+        private static bool EOF = false;
 
         //add page to buffer
-        public static async Task Enqueue(WikipediaPage page, CancellationTokenSource cancellationTokenSource)
+        public static async Task Enqueue(WikipediaPage page)
         {
             //check if the current buffer size is bigger than the max buffer size, if it is, wait until the buffer is smaller
             while (currentBufferSize > MAX_BUFFER_SIZE)
             {
-                await Task.Delay(100, cancellationTokenSource.Token);
+                await Task.Delay(100);
             }
 
             //add page to buffer
@@ -64,12 +66,21 @@ namespace WikipediaParser
                         currentBufferSize -= (uint)page.text.Length;
                         currentBufferSize -= (uint)page.title.Length;
                         return page;
+                    } else if (EOF)
+                    {
+                        throw new Exception("EOF");
                     }
                 }
 
                 //await if the buffer is empty
                 await Task.Delay(100, cancellationTokenSource.Token);
             }
+        }
+
+        //function to notify this class EOF was reached
+        public static void NotifyEOF()
+        {
+            EOF = true;
         }
     }
 }
