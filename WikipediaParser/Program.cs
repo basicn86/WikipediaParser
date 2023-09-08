@@ -23,7 +23,7 @@
                 {
                     //cancellation source
                     CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-                    WikipediaPage page = await WikipediaReadBuffer.AwaitForPage(cancellationTokenSource);
+                    WikipediaPage page = WikipediaReadBuffer.AwaitForPage();
 
                     page.text = "";
 

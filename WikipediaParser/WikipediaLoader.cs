@@ -57,7 +57,7 @@ namespace WikipediaParser
                         if (page.text.StartsWith("#REDIRECT")) continue;
 
                         //add the page to the buffer
-                        await WikipediaReadBuffer.Enqueue(page, cancellationTokenSource);
+                        WikipediaReadBuffer.AwaitEnqueue(page, cancellationTokenSource);
                     }
                 }
             }

@@ -48,7 +48,6 @@ namespace WikipediaParser
                 if (buffer.Count == 0) throw new Exception("Buffer is empty");
 
                 WikipediaPage page = buffer.Dequeue();
-                Console.WriteLine(buffer.Count);
 
                 //remove the size of the page from the current buffer size
                 currentBufferSize -= (uint)page.text.Length;
@@ -67,7 +66,6 @@ namespace WikipediaParser
                     if (buffer.Count > 0)
                     {
                         WikipediaPage page = buffer.Dequeue();
-                        Console.WriteLine(buffer.Count);
                         currentBufferSize -= (uint)page.text.Length;
                         currentBufferSize -= (uint)page.title.Length;
                         return page;

@@ -18,12 +18,12 @@ namespace WikipediaParser
         private static bool EOF = false;
 
         //add page to buffer
-        public static async Task Enqueue(WikipediaPage page, CancellationTokenSource cancellationTokenSource)
+        public static void AwaitEnqueue(WikipediaPage page, CancellationTokenSource cancellationTokenSource)
         {
             //check if the current buffer size is bigger than the max buffer size, if it is, wait until the buffer is smaller
             while (currentBufferSize > MAX_BUFFER_SIZE)
             {
-                await Task.Delay(100, cancellationTokenSource.Token);
+                Thread.Sleep(100);
             }
 
             //add page to buffer
@@ -53,7 +53,7 @@ namespace WikipediaParser
             }
         }
 
-        public static async Task<WikipediaPage> AwaitForPage(CancellationTokenSource cancellationTokenSource)
+        public static WikipediaPage AwaitForPage()
         {
             while (true)
             {
@@ -72,7 +72,7 @@ namespace WikipediaParser
                 }
 
                 //await if the buffer is empty
-                await Task.Delay(100, cancellationTokenSource.Token);
+                Thread.Sleep(100);
             }
         }
 

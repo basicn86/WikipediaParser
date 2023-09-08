@@ -42,7 +42,7 @@ namespace WikipediaParser
                         //write the page to the xml file
                         writer.WriteStartElement(null, "page", null);
                         writer.WriteElementString(null, "title", null, page.title);
-                        //await writer.WriteElementStringAsync(null, "text", null, page.text);
+                        writer.WriteElementString(null, "text", null, page.text);
                         writer.WriteEndElement();
                     }
                 }
