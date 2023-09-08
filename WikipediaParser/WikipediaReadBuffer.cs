@@ -23,7 +23,7 @@ namespace WikipediaParser
             //check if the current buffer size is bigger than the max buffer size, if it is, wait until the buffer is smaller
             while (currentBufferSize > MAX_BUFFER_SIZE)
             {
-                Thread.Sleep(100);
+                Thread.Sleep(5);
             }
 
             //add page to buffer
