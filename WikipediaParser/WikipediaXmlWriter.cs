@@ -33,18 +33,36 @@ namespace WikipediaParser
                 await writer.WriteStartDocumentAsync();
                 await writer.WriteStartElementAsync(null, "wiki", null);
 
-                while (!cancellationTokenSource.IsCancellationRequested)
+                try
                 {
-                    //await page from buffer
-                    WikipediaPage page = await WikipediaWriteBuffer.AwaitForPage(cancellationTokenSource);
+                    while (!cancellationTokenSource.IsCancellationRequested)
+                    {
+                        //await page from buffer
+                        WikipediaPage page = await WikipediaWriteBuffer.AwaitForPage(cancellationTokenSource);
 
-                    //write the page to the xml file
-                    await writer.WriteStartElementAsync(null, "page", null);
-                    await writer.WriteElementStringAsync(null, "title", null, page.title);
-                    await writer.WriteElementStringAsync(null, "text", null, page.text);
+                        //write the page to the xml file
+                        await writer.WriteStartElementAsync(null, "page", null);
+                        await writer.WriteElementStringAsync(null, "title", null, page.title);
+                        await writer.WriteElementStringAsync(null, "text", null, page.text);
+                        await writer.WriteEndElementAsync();
+                    }
+                }
+                catch (EndOfStreamException e)
+                {
+                    //write to the console that the end of the stream has been reached
+                    Console.WriteLine("End of stream reached, writer is finishing");
+
+                    //finish the writer
                     await writer.WriteEndElementAsync();
+                    await writer.WriteEndDocumentAsync();
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Critical error in writer: " + e.Message);
                 }
 
+                //finish the writer if the cancellation token has been requested
                 await writer.WriteEndElementAsync();
                 await writer.WriteEndDocumentAsync();
             }

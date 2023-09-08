@@ -62,8 +62,8 @@ namespace WikipediaParser
                 }
             }
 
-            //end of file bool
-            EOF = true;
+            //notify the buffer that the end of the file has been reached
+            WikipediaReadBuffer.NotifyEOF();
 
             //remove the cancellation source
             cancellationTokenSource = null;
@@ -84,11 +84,6 @@ namespace WikipediaParser
                 LoadXml();
             });
             thread.Start();
-        }
-
-        public bool IsEOF()
-        {
-            return EOF;
         }
 
         public void CancelThread()

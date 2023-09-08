@@ -16,11 +16,15 @@ namespace WikipediaParser
         //max buffer size 1GB
         private const uint MAX_BUFFER_SIZE = 1 * 1024 * 1024 * 1024;
         private static uint currentBufferSize = 0;
-        private static bool EOF = false;
+        //eof
+        private static bool Shutdown = false;
 
         //add page to buffer
         public static async Task Enqueue(WikipediaPage page)
         {
+            //if the app is shutting down, do not allow anymore entries
+            if (Shutdown) return;
+
             //check if the current buffer size is bigger than the max buffer size, if it is, wait until the buffer is smaller
             while (currentBufferSize > MAX_BUFFER_SIZE)
             {
@@ -66,9 +70,10 @@ namespace WikipediaParser
                         currentBufferSize -= (uint)page.text.Length;
                         currentBufferSize -= (uint)page.title.Length;
                         return page;
-                    } else if (EOF)
+                    } else if (Shutdown)
                     {
-                        throw new Exception("EOF");
+                        //end of stream exception
+                        throw new EndOfStreamException("End of buffer");
                     }
                 }
 
@@ -77,10 +82,10 @@ namespace WikipediaParser
             }
         }
 
-        //function to notify this class EOF was reached
-        public static void NotifyEOF()
+        //notify shutdown
+        public static void CallShutdown()
         {
-            EOF = true;
+            Shutdown = true;
         }
     }
 }

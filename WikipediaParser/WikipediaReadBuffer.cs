@@ -15,6 +15,7 @@ namespace WikipediaParser
         //max buffer size 1GB
         private const uint MAX_BUFFER_SIZE = 1 * 1024 * 1024 * 1024;
         private static uint currentBufferSize = 0;
+        private static bool EOF = false;
 
         //add page to buffer
         public static async Task Enqueue(WikipediaPage page, CancellationTokenSource cancellationTokenSource)
@@ -64,12 +65,21 @@ namespace WikipediaParser
                         currentBufferSize -= (uint)page.text.Length;
                         currentBufferSize -= (uint)page.title.Length;
                         return page;
+                    } else if (EOF)
+                    {
+                        throw new EndOfStreamException("End of File");
                     }
                 }
 
                 //await if the buffer is empty
                 await Task.Delay(100, cancellationTokenSource.Token);
             }
+        }
+
+        //notify EOF function
+        public static void NotifyEOF()
+        {
+            EOF = true;
         }
     }
 }
