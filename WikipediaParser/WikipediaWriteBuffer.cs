@@ -16,19 +16,18 @@ namespace WikipediaParser
         //max buffer size 1GB
         private const uint MAX_BUFFER_SIZE = 1 * 1024 * 1024 * 1024;
         private static uint currentBufferSize = 0;
-        //eof
-        private static bool Shutdown = false;
+        //Closed bool
+        private static volatile bool closed = false;
 
         //add page to buffer
-        public static async Task Enqueue(WikipediaPage page)
+        public static void AwaitEnqueue(WikipediaPage page)
         {
-            //if the app is shutting down, do not allow anymore entries
-            if (Shutdown) return;
+            if (closed) return;
 
             //check if the current buffer size is bigger than the max buffer size, if it is, wait until the buffer is smaller
             while (currentBufferSize > MAX_BUFFER_SIZE)
             {
-                await Task.Delay(100);
+                Thread.Sleep(100);
             }
 
             //add page to buffer
@@ -49,6 +48,7 @@ namespace WikipediaParser
                 if (buffer.Count == 0) throw new Exception("Buffer is empty");
 
                 WikipediaPage page = buffer.Dequeue();
+                Console.WriteLine(buffer.Count);
 
                 //remove the size of the page from the current buffer size
                 currentBufferSize -= (uint)page.text.Length;
@@ -58,7 +58,7 @@ namespace WikipediaParser
             }
         }
 
-        public static async Task<WikipediaPage> AwaitForPage(CancellationTokenSource cancellationTokenSource)
+        public static WikipediaPage AwaitForPage()
         {
             while (true)
             {
@@ -67,25 +67,43 @@ namespace WikipediaParser
                     if (buffer.Count > 0)
                     {
                         WikipediaPage page = buffer.Dequeue();
+                        Console.WriteLine(buffer.Count);
                         currentBufferSize -= (uint)page.text.Length;
                         currentBufferSize -= (uint)page.title.Length;
                         return page;
-                    } else if (Shutdown)
+                    } else if (closed)
                     {
-                        //end of stream exception
-                        throw new EndOfStreamException("End of buffer");
+                        throw new EndOfStreamException("No more pages available.");
                     }
                 }
 
                 //await if the buffer is empty
-                await Task.Delay(100, cancellationTokenSource.Token);
+                Thread.Sleep(100);
             }
         }
 
-        //notify shutdown
-        public static void CallShutdown()
+        //is empty
+        public static bool IsEmpty()
         {
-            Shutdown = true;
+            lock (lockObject)
+            {
+                return buffer.Count == 0;
+            }
+        }
+
+        //close buffer function
+        public static void Close()
+        {
+            lock(lockObject)
+            {
+                closed = true;
+            }
+        }
+
+        //buffer is closed function
+        public static bool IsClosed()
+        {
+            return closed;
         }
     }
 }

@@ -5,7 +5,7 @@
         static async Task Main(string[] args)
         {
             //create new WikipediaLoader
-            WikipediaLoader loader = new WikipediaLoader("E:/enwiki.xml");
+            WikipediaLoader loader = new WikipediaLoader("C:/enwiki.xml");
             //writer
             WikipediaXmlWriter writer = new WikipediaXmlWriter("D:/enwiki/parsedwiki.xml");
 
@@ -14,7 +14,7 @@
             writer.StartThread();
 
             //wait 10 seconds
-            await Task.Delay(10000);
+            await Task.Delay(3000);
 
             //try dequeueing all pages from the buffer
             while (true)
@@ -27,13 +27,11 @@
 
                     page.text = "";
 
-                    await WikipediaWriteBuffer.Enqueue(page);
+                    WikipediaWriteBuffer.AwaitEnqueue(page);
                 } catch (EndOfStreamException e)
                 {
                     //write to console that the end of the stream has been reached
                     Console.WriteLine("End of stream reached, reader is finishing");
-                    //close the writer
-                    WikipediaWriteBuffer.CallShutdown();
 
                     //wait for writer and loader to finish threads
                     loader.CancelThread();

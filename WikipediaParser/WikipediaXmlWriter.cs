@@ -10,61 +10,56 @@ namespace WikipediaParser
     public class WikipediaXmlWriter
     {
         private string xmlPath = "";
-        private Thread thread;
-        private CancellationTokenSource? cancellationTokenSource;
+        private Thread? thread = null;
 
         public WikipediaXmlWriter(string xmlPath)
         {
             this.xmlPath = xmlPath;
         }
 
-        private async Task WriteXml()
+        private void WriteXml()
         {
             //xml writer settings
             XmlWriterSettings settings = new XmlWriterSettings()
             {
-                Async = true,
+                Async = false,
                 Encoding = Encoding.UTF8,
                 Indent = true
             };
 
             using (XmlWriter writer = XmlWriter.Create(xmlPath, settings))
             {
-                await writer.WriteStartDocumentAsync();
-                await writer.WriteStartElementAsync(null, "wiki", null);
+                writer.WriteStartDocument();
+                writer.WriteStartElement(null, "wiki", null);
 
                 try
                 {
-                    while (!cancellationTokenSource.IsCancellationRequested)
+                    while (!WikipediaWriteBuffer.IsClosed() || !WikipediaWriteBuffer.IsEmpty())
                     {
                         //await page from buffer
-                        WikipediaPage page = await WikipediaWriteBuffer.AwaitForPage(cancellationTokenSource);
+                        WikipediaPage page = WikipediaWriteBuffer.AwaitForPage();
 
                         //write the page to the xml file
-                        await writer.WriteStartElementAsync(null, "page", null);
-                        await writer.WriteElementStringAsync(null, "title", null, page.title);
-                        await writer.WriteElementStringAsync(null, "text", null, page.text);
-                        await writer.WriteEndElementAsync();
+                        writer.WriteStartElement(null, "page", null);
+                        writer.WriteElementString(null, "title", null, page.title);
+                        //await writer.WriteElementStringAsync(null, "text", null, page.text);
+                        writer.WriteEndElement();
                     }
-                }
-                catch (EndOfStreamException e)
-                {
-                    //write to the console that the end of the stream has been reached
-                    Console.WriteLine("End of stream reached, writer is finishing");
-
-                    //finish the writer
-                    await writer.WriteEndElementAsync();
-                    await writer.WriteEndDocumentAsync();
-                    return;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Critical error in writer: " + e.Message);
+                    //write to console
+                    Console.WriteLine("Critical error: " + e.Message);
                 }
+                
 
-                //finish the writer if the cancellation token has been requested
-                await writer.WriteEndElementAsync();
-                await writer.WriteEndDocumentAsync();
+                //write the end of the document
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+
+                //close the writer and flush the remaining data
+                writer.Flush();
+                writer.Close();
             }
 
             //write to the console that the thread has been completed
@@ -74,8 +69,7 @@ namespace WikipediaParser
         public void StartThread()
         {
             //return if thread is already going
-            if (cancellationTokenSource is not null) return;
-            cancellationTokenSource = new CancellationTokenSource();
+            if (thread is not null) return;
 
             //start thread
             thread = new Thread(() =>
@@ -83,13 +77,14 @@ namespace WikipediaParser
                 WriteXml();
             });
             thread.Start();
+
+            Console.WriteLine("Writer has been started");
         }
 
         //cancel thread function
         public void CancelThread()
         {
-            //cancel the token
-            cancellationTokenSource?.Cancel();
+            WikipediaWriteBuffer.Close();
 
             //wait for thread to finish
             thread.Join();
