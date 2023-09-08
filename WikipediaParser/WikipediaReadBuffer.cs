@@ -18,7 +18,7 @@ namespace WikipediaParser
         private static bool EOF = false;
 
         //add page to buffer
-        public static void AwaitEnqueue(WikipediaPage page, CancellationTokenSource cancellationTokenSource)
+        public static void AwaitEnqueue(WikipediaPage page)
         {
             //check if the current buffer size is bigger than the max buffer size, if it is, wait until the buffer is smaller
             while (currentBufferSize > MAX_BUFFER_SIZE)

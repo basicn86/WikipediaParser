@@ -13,7 +13,7 @@ namespace WikipediaParser
         private Thread thread;
         //cancellation token
         private CancellationTokenSource? cancellationTokenSource;
-        private bool EOF = false;
+        private volatile bool EOF = false;
 
         public WikipediaLoader(string xmlPath)
         {
@@ -30,7 +30,7 @@ namespace WikipediaParser
                 while (reader.Read())
                 {
                     //if isRunning is false, stop the thread
-                    if (cancellationTokenSource.IsCancellationRequested) return;
+                    if (EOF) return;
 
                     //check if the current node is an element
                     if (reader.NodeType != XmlNodeType.Element)
@@ -57,7 +57,7 @@ namespace WikipediaParser
                         if (page.text.StartsWith("#REDIRECT")) continue;
 
                         //add the page to the buffer
-                        WikipediaReadBuffer.AwaitEnqueue(page, cancellationTokenSource);
+                        WikipediaReadBuffer.AwaitEnqueue(page);
                     }
                 }
             }
@@ -88,7 +88,7 @@ namespace WikipediaParser
 
         public void CancelThread()
         {
-            cancellationTokenSource?.Cancel();
+            EOF = true;
 
             //wait for thread to join
             thread.Join();

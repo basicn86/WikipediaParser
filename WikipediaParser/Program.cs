@@ -16,34 +16,21 @@
             //wait 10 seconds
             await Task.Delay(3000);
 
-            //try dequeueing all pages from the buffer
-            while (true)
+            WikipediaParser[] parsers = new WikipediaParser[12];
+            for (int i = 0; i < 12; i++)
             {
-                try
-                {
-                    //cancellation source
-                    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-                    WikipediaPage page = WikipediaReadBuffer.AwaitForPage();
-
-                    page.text = "";
-
-                    WikipediaWriteBuffer.AwaitEnqueue(page);
-                } catch (EndOfStreamException e)
-                {
-                    //write to console that the end of the stream has been reached
-                    Console.WriteLine("End of stream reached, reader is finishing");
-
-                    //wait for writer and loader to finish threads
-                    loader.CancelThread();
-                    writer.CancelThread();
-                    return;
-                } catch (Exception e)
-                {
-                    //write to console a critical error occured
-                    Console.WriteLine("Critical error: " + e.Message);
-                    return;
-                }
+                parsers[i] = new WikipediaParser();
+                parsers[i].Start();
             }
+
+            //wait for all parsers to finish
+            for (int i = 0; i < 12; i++)
+            {
+                parsers[i].Join();
+            }
+
+            loader.CancelThread();
+            writer.CancelThread();
         }
     }
 }
