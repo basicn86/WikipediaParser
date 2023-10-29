@@ -13,7 +13,7 @@ namespace WikipediaParser
         //lock object
         private static readonly object lockObject = new object();
         //max buffer size 1GB
-        private const uint MAX_BUFFER_SIZE = 1 * 1024 * 1024 * 1024;
+        private const uint MAX_BUFFER_SIZE = 3u * 1024u * 1024u * 1024u;
         private static uint currentBufferSize = 0;
         private static bool EOF = false;
 

@@ -13,7 +13,7 @@ namespace WikipediaParser
         private Thread thread;
         //cancellation token
         private CancellationTokenSource? cancellationTokenSource;
-        private volatile bool EOF = false;
+        private bool EOF = false;
 
         public WikipediaLoader(string xmlPath)
         {
@@ -21,7 +21,7 @@ namespace WikipediaParser
             this.EOF = false;
         }
 
-        private async Task LoadXml()
+        private void LoadXml()
         {
             //create new XmlReader
             using (XmlReader reader = XmlReader.Create(xmlPath))
@@ -88,7 +88,7 @@ namespace WikipediaParser
 
         public void CancelThread()
         {
-            EOF = true;
+            //EOF = true;
 
             //wait for thread to join
             thread.Join();
